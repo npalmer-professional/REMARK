@@ -31,7 +31,7 @@ aXtraHuge = None                    # A very large value of assets to add to the
 aXtraExtra = None                   # Some other value of assets to add to the grid, not used
 aXtraCount = 8                      # Number of points in the grid of "assets above minimum"
 
-BoroCnstArt = 0.0                   # Artificial borrowing constraint; imposed minimum level of end-of period assets
+BoroCnstArt = None                   # Artificial borrowing constraint; imposed minimum level of end-of period assets
 CubicBool = True                    # Use cubic spline interpolation when True, linear interpolation when False
 vFuncBool = False                   # Whether to calculate the value function during solution
 

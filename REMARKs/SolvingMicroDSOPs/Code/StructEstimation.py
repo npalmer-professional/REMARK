@@ -20,6 +20,7 @@ import csv
 import numpy as np                              # Numeric Python
 import pylab                                    # Python reproductions of some Matlab functions
 from time import time, clock                    # Timing utility
+import matplotlib.pyplot as plt
 
 # Import modules from core HARK libraries:
 import HARK.ConsumptionSaving.ConsIndShockModel as Model # The consumption-saving micro model
@@ -39,17 +40,18 @@ code_dir = os.path.join(my_file_path, "../Code/") # Relative directory for primi
 # Import modules from local repository. If local repository is part of HARK, 
 # this will import from HARK. Otherwise manual pathname specification is in 
 # order.
-try: 
+#try: 
     # Import from core HARK code first:
-    from HARK.SolvingMicroDSOPs.Calibration import EstimationParameters as Params           # Parameters for the consumer type and the estimation
-    from HARK.SolvingMicroDSOPs.Calibration import SetupSCFdata as Data                     # SCF 2004 data on household wealth
-
-except:
-    # Need to rely on the manual insertion of pathnames to all files in do_all.py
-    # NOTE sys.path.insert(0, os.path.abspath(tables_dir)), etc. may need to be 
-    # copied from do_all.py to here
-    import EstimationParameters as Params           # Parameters for the consumer type and the estimation
-    import SetupSCFdata as Data                     # SCF 2004 data on household wealth
+#    from HARK.SolvingMicroDSOPs.Calibration import EstimationParameters as Params           # Parameters for the consumer type and the estimation
+#    from HARK.SolvingMicroDSOPs.Calibration import SetupSCFdata as Data                     # SCF 2004 data on household wealth
+#
+#except:
+# Need to rely on the manual insertion of pathnames to all files in do_all.py
+# NOTE sys.path.insert(0, os.path.abspath(tables_dir)), etc. may need to be 
+# copied from do_all.py to here
+sys.path.insert(0, os.path.abspath(calibration_dir))
+import EstimationParameters as Params           # Parameters for the consumer type and the estimation
+import SetupSCFdata as Data                     # SCF 2004 data on household wealth
 
 
 
@@ -278,6 +280,37 @@ def calculateStandardErrorsByBootstrap(initial_estimate,N,seed=0,verbose=False):
     CRRA_std_error = np.std(estimate_array[1])
 
     return [DiscFacAdj_std_error, CRRA_std_error]
+
+
+def make_contour_slice(f=smmObjectiveFxn, DiscFac_range=(0.95,1.01), CRRA=3, grid_density=200):
+    # Make a single slice across the welfare space. 
+    #grid_density = 200   # Number of parameter values in each dimension
+    #CRRA = 3
+    DiscFacAdj_list = np.linspace(DiscFac_range[0], DiscFac_range[1], grid_density)
+    obj = [] 
+    lazy_total = 0
+    for j in range(grid_density):
+        lazy_total += 1
+    lazy_ctr = 0
+    t_start_contour = clock()
+    for j in range(grid_density):
+        DiscFacAdj = DiscFacAdj_list[j]
+        if lazy_ctr % 50 == 0:
+            print("on step "+str(lazy_ctr) + " of "+str(lazy_total) + " for time (min) = "+str((clock()-t_start_contour)/60))
+        lazy_ctr += 1
+        obj.append( f(DiscFacAdj, CRRA) )
+    t_end_contour = clock()
+    time_to_contour = t_end_contour-t_start_contour
+    print('Time to execute all:', round(time_to_contour/60.,2), 'min,', time_to_contour, 'sec')
+    
+    plt.plot(DiscFacAdj_list, obj, label=r'$\rho$ = '+str(CRRA))
+    plt.ylabel(r'loss',fontsize=14)
+    plt.xlabel(r'discount factor adjustment $\beth$',fontsize=14)
+    plt.savefig(os.path.join(figures_dir, 'SMMslice.pdf'))
+    plt.savefig(os.path.join(figures_dir, 'SMMslice.png'))
+    plt.show()
+    plt.close()
+
 
 
 #=================================================================
